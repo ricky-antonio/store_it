@@ -4,6 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { appwriteConfig } from "../appwrite/config";
 import { parseStringify } from "../utils";
+import { cookies } from "next/headers";
 
 const getUserByEmail = async (email: string) => {
     const { databases } = await createAdminClient();
@@ -22,7 +23,7 @@ const handleError = (error: unknown, message: string) => {
     throw error;
 };
 
-const sendEmailOTP = async ({ email }: { email: string }) => {
+export const sendEmailOTP = async ({ email }: { email: string }) => {
     const { account } = await createAdminClient();
 
     try {
@@ -57,10 +58,35 @@ export const createAccount = async ({
                 fullName,
                 email,
                 avatar: "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png",
-                accountId
+                accountId,
             }
-        )
+        );
     }
 
-    return parseStringify({accountId});
+    return parseStringify({ accountId });
+};
+
+export const verifySecret = async ({
+    accountId,
+    password,
+}: {
+    accountId: string;
+    password: string;
+}) => {
+    try {
+        const { account } = await createAdminClient();
+
+        const session = await account.createSession(accountId, password);
+
+        (await cookies()).set("appwrite-session", session.secret, {
+            path: "/",
+            httpOnly: true,
+            sameSite: "strict",
+            secure: true,
+        });
+
+        return parseStringify({ sessionId: session.$id });
+    } catch (err) {
+        handleError(err, "Failed to verify OTP");
+    }
 };

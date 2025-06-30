@@ -1,26 +1,27 @@
+"use client";
+
 import React from "react";
 
 import {
     AlertDialog,
     AlertDialogAction,
-    AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 import {
     InputOTP,
     InputOTPGroup,
-    InputOTPSeparator,
     InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useState } from "react";
 import Image from "next/image";
 import { Button } from "./ui/button";
+import { sendEmailOTP, verifySecret } from "@/lib/actions/user.actions";
+import { useRouter } from "next/navigation";
 
 const OTPModal = ({
     accountId,
@@ -29,6 +30,7 @@ const OTPModal = ({
     accountId: string;
     email: string;
 }) => {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(true);
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +41,10 @@ const OTPModal = ({
 
         try {
             //call api to verify OTP
+            const sessionId = await verifySecret({accountId, password});
+
+            if (sessionId) router.push("/")
+
         } catch (err) {
             console.log("Failed to verify OTP : ", err);
         } finally {
@@ -48,6 +54,7 @@ const OTPModal = ({
 
     const handleResendOtp = async () => {
         //call api to resend OTP
+        await sendEmailOTP({email});
     };
 
     return (
@@ -73,12 +80,12 @@ const OTPModal = ({
 
                 <InputOTP maxLength={6} value={password} onChange={setPassword}>
                     <InputOTPGroup className="shad-otp">
+                        <InputOTPSlot index={0} className="shad-otp-slot" />
                         <InputOTPSlot index={1} className="shad-otp-slot" />
                         <InputOTPSlot index={2} className="shad-otp-slot" />
                         <InputOTPSlot index={3} className="shad-otp-slot" />
                         <InputOTPSlot index={4} className="shad-otp-slot" />
                         <InputOTPSlot index={5} className="shad-otp-slot" />
-                        <InputOTPSlot index={0} className="shad-otp-slot" />
                     </InputOTPGroup>
                 </InputOTP>
 
