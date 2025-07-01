@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-import { navItems, avatarPlaceholderUrl } from "@/constants";
+import { navItems } from "@/constants";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ const Sidebar = ({fullName, email, avatar}:Props) => {
                     alt="logo"
                     width={160}
                     height={50}
-                    className="hidden h-auto lg:block"
+                    className="hidden h-auto w-auto lg:block"
                 />
             </Link>
             <Link href="/">
