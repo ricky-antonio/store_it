@@ -1,6 +1,13 @@
 "use client";
 
-import { Dialog } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,24 +22,114 @@ import { Models } from "node-appwrite";
 import { actionsDropdownItems } from "@/constants";
 import Link from "next/link";
 import { constructDownloadUrl } from "@/lib/utils";
+import { Input } from "@/store_it/components/ui/input";
+import { Button } from "./ui/button";
+import { renameFile } from "@/lib/actions/file.actions";
+import { usePathname } from "next/navigation";
 
 const ActionDropDown = ({ file }: { file: Models.Document }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDropDownOpen, setIsDropDownOpen] = useState(false);
     const [action, setAction] = useState<ActionType | null>(null);
+    const [name, setName] = useState(file.name);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const path = usePathname();
+
+    const closeAllModals = () => {
+        setIsModalOpen(false);
+        setIsDropDownOpen(false);
+        setAction(null);
+        setName(file.name);
+        // setEmails([]);
+    };
+
+    const handleAction = async () => {
+        if (!action) return;
+        setIsLoading(true);
+        let success = false;
+
+        const actions = {
+            rename: () =>
+                renameFile({
+                    fileId: file.$id,
+                    name,
+                    extension: file.extension,
+                    path,
+                }),
+            share: () => console.log("share"),
+            delete: () => console.log("delete"),
+        };
+
+        success = await actions[action.value as keyof typeof actions]();
+
+        if (success) closeAllModals();
+        setIsLoading(false);
+    };
+
+    const renderDialogContent = () => {
+        if (!action) return null;
+        const { value, label } = action;
+        return (
+            <DialogContent className="shad-dialog button">
+                <DialogHeader className="flex flex-col gap-3">
+                    <DialogTitle className="text-center text-light-100">
+                        {label}
+                    </DialogTitle>
+                    {value === "rename" && (
+                        <Input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                    )}
+                </DialogHeader>
+                {["rename", "delete", "share"].includes(value) && (
+                    <DialogFooter className="flex flex-col gap-3 md:flex-row">
+                        <Button
+                            onClick={closeAllModals}
+                            className="modal-cancel-button"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleAction}
+                            className="modal-submit-button"
+                        >
+                            <p className="capitalize">{value}</p>
+                            {isLoading && (
+                                <Image
+                                    src="/assets/icons/loader.svg"
+                                    alt="loader"
+                                    width={24}
+                                    height={24}
+                                    className="animate-spin"
+                                />
+                            )}
+                        </Button>
+                    </DialogFooter>
+                )}
+            </DialogContent>
+        );
+    };
 
     return (
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DropdownMenu
                 open={isDropDownOpen}
                 onOpenChange={setIsDropDownOpen}
+                modal={false}
             >
-                <DropdownMenuTrigger className="shad-no-focus">
+                <DropdownMenuTrigger className="shad-no-focus z-50">
                     <Image
                         src="/assets/icons/dots.svg"
                         height={34}
                         width={34}
                         alt="dots"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
                     />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -48,13 +145,12 @@ const ActionDropDown = ({ file }: { file: Models.Document }) => {
                                 setAction(actionItem);
 
                                 if (
-                                    action &&
                                     [
                                         "rename",
                                         "share",
                                         "delete",
                                         "details",
-                                    ].includes(action.value)
+                                    ].includes(actionItem.value)
                                 ) {
                                     setIsModalOpen(true);
                                 }
@@ -91,6 +187,7 @@ const ActionDropDown = ({ file }: { file: Models.Document }) => {
                     ))}
                 </DropdownMenuContent>
             </DropdownMenu>
+            {renderDialogContent()}
         </Dialog>
     );
 };

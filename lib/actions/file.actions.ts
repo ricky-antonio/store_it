@@ -41,7 +41,7 @@ export const uploadFile = async ({
             users: [],
             bucketFileId: bucketFile.$id,
         };
-        console.log({fileDocument, bucketFile })
+        console.log({ fileDocument, bucketFile });
 
         const newFile = await databases
             .createDocument(
@@ -94,5 +94,31 @@ export const getFiles = async () => {
         return parseStringify(files);
     } catch (err) {
         handleError(err, "Failed to get files");
+    }
+};
+
+export const renameFile = async ({
+    fileId,
+    name,
+    extension,
+    path,
+}: RenameFileProps) => {
+    const { databases } = await createAdminClient();
+
+    try {
+        const newName = `${name}.${extension}`;
+        const updatedFile = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.filesCollectionId,
+            fileId,
+            {
+                name: newName,
+            }
+        );
+
+        revalidatePath(path);
+        return parseStringify(updatedFile);
+    } catch (err) {
+        handleError(err, "Failed to rename file");
     }
 };
