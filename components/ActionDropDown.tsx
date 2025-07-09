@@ -47,7 +47,6 @@ const ActionDropDown = ({ file }: { file: Models.Document }) => {
         setIsDropDownOpen(false);
         setAction(null);
         setName(file.name);
-        // setEmails([]);
     };
 
     const handleAction = async () => {
